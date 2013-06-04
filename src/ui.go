@@ -49,7 +49,8 @@ type UiComponent interface {
  * Ui context type.
  */
 type Ui struct {
-    statusBar       UiComponent
+    grid            *Grid
+    statusBar       *UiStatusBar
 }
 
 
@@ -63,7 +64,9 @@ func NewUI() (*Ui, error) {
     if termboxError != nil {
         return nil, termboxError
     } else {
-        uiCtx := &Ui{&UiStatusBar{"Hello", "World"}}
+        uiCtx := new(Ui)  // &Ui{&UiStatusBar{"Hello", "World"}}
+        uiCtx.grid = NewGrid(&TestModel{})
+        uiCtx.statusBar = &UiStatusBar{"Hello", "World"}
         return uiCtx, nil
     }
 }
@@ -92,6 +95,7 @@ func (ui *Ui) redrawInternal(width, height int) {
     termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 
     // TODO: This will eventually offload to UI "components"
+    ui.grid.Redraw(0, 0, width, height - 2)
 
     // Draws the status bar
     ui.statusBar.Redraw(0, height - 2, width, 2)
@@ -109,7 +113,23 @@ func (ui *Ui) NextEvent() UiEvent {
         if event.Type == termbox.EventResize {
             ui.redrawInternal(event.Width, event.Height)
         } else {
-            return UiEvent{EventKeyPress, 0}
+
+            // !!TEMP!!
+            if (event.Ch == 'i') {
+                ui.grid.ShiftBy(0, -1)
+            } else if (event.Ch == 'k') {
+                ui.grid.ShiftBy(0, 1)
+            } else if (event.Ch == 'j') {
+                ui.grid.ShiftBy(1, 0)
+            } else if (event.Ch == 'l') {
+                ui.grid.ShiftBy(-1, 0)
+            } else {
+                return UiEvent{EventKeyPress, 0}
+            }
+            // !!END TEMP!!
+
+            ui.Redraw()
+            //return UiEvent{EventKeyPress, 0}
         }
     }
 }

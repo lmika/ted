@@ -1,8 +1,12 @@
+GO = go
 
-GOFILES = main.go ui.go
+GOFILES = main.go ui.go grid.go
 
 ted: $(GOFILES)
-	go build -o ted $(GOFILES)
+	$(GO) build -o ted $(GOFILES)
 
 clean:
 	-rm ted
+
+dependencies:
+	$(GO) get "github.com/nsf/termbox-go"

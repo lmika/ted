@@ -69,6 +69,10 @@ func NewUI() (*Ui, error) {
         uiCtx.statusBar = &UiStatusBar{"Hello", "World"}
         return uiCtx, nil
     }
+    
+    // XXX: Workaround for bug in compiler
+    panic("Unreachable code")
+    return nil, nil
 }
 
 
@@ -120,9 +124,9 @@ func (ui *Ui) NextEvent() UiEvent {
             } else if (event.Ch == 'k') {
                 ui.grid.ShiftBy(0, 1)
             } else if (event.Ch == 'j') {
-                ui.grid.ShiftBy(1, 0)
-            } else if (event.Ch == 'l') {
                 ui.grid.ShiftBy(-1, 0)
+            } else if (event.Ch == 'l') {
+                ui.grid.ShiftBy(1, 0)
             } else {
                 return UiEvent{EventKeyPress, 0}
             }
@@ -132,6 +136,10 @@ func (ui *Ui) NextEvent() UiEvent {
             //return UiEvent{EventKeyPress, 0}
         }
     }
+    
+    // XXX: Workaround for bug in compiler
+    panic("Unreachable code")
+    return UiEvent{EventKeyPress, 0}
 }
 
 

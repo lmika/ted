@@ -40,8 +40,8 @@ type gridPoint      int
  */
 type Grid struct {
     model           GridModel
-    offsetX         int             // Offset of the viewport (REAL characters, not cells)
-    offsetY         int             // Offset of the viewport
+    cellX           int             // Left most cell
+    cellY           int             // Top most cell
 }
 
 /**
@@ -80,8 +80,73 @@ func (grid *Grid) RequestDims() (int, int) {
  * Shifts the viewport of the grid.
  */
 func (grid *Grid) ShiftBy(x int, y int) {
-    grid.offsetX += x
-    grid.offsetY += y
+    grid.cellX += x
+    grid.cellY += y
+}
+
+
+// Gets the cell value and attributes of a particular cell
+func (grid *Grid) getCellData(cellX, cellY int) (text string, fg, bg termbox.Attribute) {
+    // The fixed cells
+    modelCellX := cellX - 1 + grid.cellX
+    modelCellY := cellY - 1 + grid.cellY
+    modelMaxX, modelMaxY := grid.model.GetDimensions()
+        
+    if (cellX == 0) && (cellY == 0) {
+        return "", termbox.AttrBold, termbox.AttrBold
+    } else if (cellX == 0) {
+        return strconv.Itoa(modelCellY), termbox.AttrBold, termbox.AttrBold
+    } else if (cellY == 0) {
+        return strconv.Itoa(modelCellX), termbox.AttrBold, termbox.AttrBold
+    } else {
+        // The data from the model
+        if (modelCellX >= 0) && (modelCellY >= 0) && (modelCellX < modelMaxX) && (modelCellY < modelMaxY) {        
+            return grid.model.GetCellValue(modelCellX, modelCellY), 0, 0
+        } else {
+            return "~", 0, 0
+        }
+    }    
+    
+    // XXX: Workaround for bug in compiler
+    panic("Unreachable code")
+    return "", 0, 0
+}
+
+// Gets the cell dimensions
+func (grid *Grid) getCellDimensions(cellX, cellY int) (width, height int) {
+
+    var cellWidth, cellHeight int
+    
+    modelCellX := cellX - 1 + grid.cellX
+    modelCellY := cellY - 1 + grid.cellY
+    modelMaxX, modelMaxY := grid.model.GetDimensions()
+    
+    // Get the cell width & height from model (if within range)
+    if (modelCellX >= 0) && (modelCellX < modelMaxX) {
+        cellWidth = grid.model.GetColWidth(modelCellX)
+    } else {
+        cellWidth = 8
+    }
+    
+    if (modelCellY >= 0) && (modelCellY < modelMaxY) {
+        cellHeight = grid.model.GetRowHeight(modelCellY)
+    } else {
+        cellHeight = 2
+    }        
+    
+    if (cellX == 0) && (cellY == 0) {
+        return 8, 1
+    } else if (cellX == 0) {
+        return 8, cellHeight
+    } else if (cellY == 0) {
+        return cellWidth, 1
+    } else {
+        return cellWidth, cellHeight
+    }
+    
+    // XXX: Workaround for bug in compiler
+    panic("Unreachable code")
+    return 0, 0
 }
 
 
@@ -118,7 +183,8 @@ func (grid *Grid) renderColumn(screenViewPort gridRect, cellX int, cellY int, ce
     screenHeight := int(screenViewPort.y2 - screenViewPort.y1)
 
     // Work out the column width and cap it if it will spill over the edge of the viewport
-    colWidth := grid.model.GetColWidth(cellX) - cellOffsetX
+    colWidth, _ := grid.getCellDimensions(cellX, cellY)
+    colWidth -= cellOffsetX
     if colWidth > screenWidth {
         colWidth = screenHeight
     }
@@ -129,13 +195,15 @@ func (grid *Grid) renderColumn(screenViewPort gridRect, cellX int, cellY int, ce
     for screenY < maxScreenY {
 
         // Cap the row height if it will go beyond the edge of the viewport.
-        rowHeight := grid.model.GetRowHeight(cellY)
+        _, rowHeight := grid.getCellDimensions(cellX, cellY)
         if screenY + rowHeight > maxScreenY {
             rowHeight = maxScreenY - screenY
         }
+        
+        cellText, cellFg, cellBg := grid.getCellData(cellX, cellY)
 
         grid.renderCell(newGridRect(cellOffsetX, cellOffsetY, colWidth - cellOffsetX, rowHeight),
-                screenX, screenY, grid.model.GetCellValue(cellX, cellY), 0, 0)  // termbox.AttrReverse, termbox.AttrReverse
+                screenX, screenY, cellText, cellFg, cellBg)  // termbox.AttrReverse, termbox.AttrReverse
 
         cellY = cellY + 1
         screenY = screenY + rowHeight - cellOffsetY
@@ -194,17 +262,7 @@ func (grid *Grid) pointToCell(x int, y int) (cellX int, cellY int, posX int, pos
  */
 func (grid *Grid) Redraw(x int, y int, w int, h int) {
     viewportRect := newGridRect(x, y, x + w, y + h)
-
-    cellX, cellY, posX, posY := grid.pointToCell(grid.offsetX, grid.offsetY)
-/*
-    grid.renderCell(gridRect{0, 0, 14, 0}, 0, 0, "Hello", termbox.AttrReverse, termbox.AttrReverse)
-    grid.renderCell(gridRect{1, 0, 14, 0}, 0, 1, "Hello", termbox.AttrReverse, termbox.AttrReverse)
-    grid.renderCell(gridRect{2, 0, 14, 0}, 0, 2, "Hello", termbox.AttrReverse, termbox.AttrReverse)
-    grid.renderCell(gridRect{3, 0, 14, 0}, 0, 3, "Hello", termbox.AttrReverse, termbox.AttrReverse)
-    grid.renderCell(gridRect{4, 0, 14, 0}, 0, 4, "Hello", termbox.AttrReverse, termbox.AttrReverse)
-    grid.renderCell(gridRect{5, 0, 14, 0}, 0, 5, "Hello", termbox.AttrReverse, termbox.AttrReverse)
-*/
-    grid.renderGrid(viewportRect, cellX, cellY, grid.offsetX - posX, grid.offsetY - posY)
+    grid.renderGrid(viewportRect, 0, 0, 0, 0)
 }
 
 // --------------------------------------------------------------------------------------------

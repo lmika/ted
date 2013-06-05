@@ -120,13 +120,13 @@ func (ui *Ui) NextEvent() UiEvent {
 
             // !!TEMP!!
             if (event.Ch == 'i') {
-                ui.grid.ShiftBy(0, -1)
+                ui.grid.MoveBy(0, -1)
             } else if (event.Ch == 'k') {
-                ui.grid.ShiftBy(0, 1)
+                ui.grid.MoveBy(0, 1)
             } else if (event.Ch == 'j') {
-                ui.grid.ShiftBy(-1, 0)
+                ui.grid.MoveBy(-1, 0)
             } else if (event.Ch == 'l') {
-                ui.grid.ShiftBy(1, 0)
+                ui.grid.MoveBy(1, 0)
             } else {
                 return UiEvent{EventKeyPress, 0}
             }

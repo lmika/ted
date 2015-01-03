@@ -1,9 +1,8 @@
 /**
  * The grid component.  This is used for displaying the model.
  */
-package main
+package ui
 
-import "github.com/nsf/termbox-go"
 import "strconv"
 
 
@@ -76,8 +75,8 @@ func NewGrid(model GridModel) *Grid {
 /**
  * Returns the requested dimensions of a grid (as required by UiComponent)
  */
-func (grid *Grid) RequestDims() (int, int) {
-    return -1, -1
+func (grid *Grid) Remeasure(w, h int) (int, int) {
+    return w, h
 }
 
 /**
@@ -122,31 +121,31 @@ func (grid *Grid) reposition() {
 
 
 // Gets the cell value and attributes of a particular cell
-func (grid *Grid) getCellData(cellX, cellY int) (text string, fg, bg termbox.Attribute) {
+func (grid *Grid) getCellData(cellX, cellY int) (text string, fg, bg Attribute) {
     // The fixed cells
     modelCellX := cellX - 1 + grid.viewCellX
     modelCellY := cellY - 1 + grid.viewCellY
     modelMaxX, modelMaxY := grid.model.GetDimensions()
         
     if (cellX == 0) && (cellY == 0) {
-        return strconv.Itoa(grid.cellsWide), termbox.AttrBold, termbox.AttrBold
+        return strconv.Itoa(grid.cellsWide), AttrBold, AttrBold
     } else if (cellX == 0) {
         if (modelCellY == grid.selCellY) {
-            return strconv.Itoa(modelCellY), termbox.AttrBold | termbox.AttrReverse, termbox.AttrBold | termbox.AttrReverse
+            return strconv.Itoa(modelCellY), AttrBold | AttrReverse, AttrBold | AttrReverse
         } else {
-            return strconv.Itoa(modelCellY), termbox.AttrBold, termbox.AttrBold
+            return strconv.Itoa(modelCellY), AttrBold, AttrBold
         }
     } else if (cellY == 0) {
         if (modelCellX == grid.selCellX) {
-            return strconv.Itoa(modelCellX), termbox.AttrBold | termbox.AttrReverse, termbox.AttrBold | termbox.AttrReverse
+            return strconv.Itoa(modelCellX), AttrBold | AttrReverse, AttrBold | AttrReverse
         } else {
-            return strconv.Itoa(modelCellX), termbox.AttrBold, termbox.AttrBold
+            return strconv.Itoa(modelCellX), AttrBold, AttrBold
         }
     } else {
         // The data from the model
         if (modelCellX >= 0) && (modelCellY >= 0) && (modelCellX < modelMaxX) && (modelCellY < modelMaxY) {     
             if (modelCellX == grid.selCellX) && (modelCellY == grid.selCellY) {   
-                return grid.model.GetCellValue(modelCellX, modelCellY), termbox.AttrReverse, termbox.AttrReverse
+                return grid.model.GetCellValue(modelCellX, modelCellY), AttrReverse, AttrReverse
             } else {
                 return grid.model.GetCellValue(modelCellX, modelCellY), 0, 0
             }
@@ -202,7 +201,7 @@ func (grid *Grid) getCellDimensions(cellX, cellY int) (width, height int) {
  * Renders a cell which contains text.  The clip rectangle defines the size of the cell, as well as the left offset
  * of the cell.  The sx and sy determine the screen position of the cell top-left.
  */
-func (grid *Grid) renderCell(cellClipRect gridRect, sx int, sy int, text string, fg, bg termbox.Attribute) {
+func (grid *Grid) renderCell(ctx *DrawContext, cellClipRect gridRect, sx int, sy int, text string, fg, bg Attribute) {
     for x := cellClipRect.x1; x <= cellClipRect.x2; x++ {
         for y := cellClipRect.y1; y <= cellClipRect.y2; y++ {
             currRune := ' '
@@ -213,7 +212,10 @@ func (grid *Grid) renderCell(cellClipRect gridRect, sx int, sy int, text string,
                 }
             }
                 
-            termbox.SetCell(int(x - cellClipRect.x1) + sx, int(y - cellClipRect.y1) + sy, currRune, fg, bg)
+            //termbox.SetCell(int(x - cellClipRect.x1) + sx, int(y - cellClipRect.y1) + sy, currRune, fg, bg)
+
+            // TODO: This might be better if this wasn't so low-level
+            ctx.DrawRuneWithAttrs(int(x - cellClipRect.x1) + sx, int(y - cellClipRect.y1) + sy, currRune, fg, bg)
         }
     }
 }
@@ -222,7 +224,7 @@ func (grid *Grid) renderCell(cellClipRect gridRect, sx int, sy int, text string,
 // Renders a column.  The viewport determines the maximum position of the rendered cell.  CellX and CellY are the
 // cell indicies to render, cellOffset are the LOCAL offset of the cell.
 // This function will return the new X position (gridRect.x1 + colWidth)
-func (grid *Grid) renderColumn(screenViewPort gridRect, cellX int, cellY int, cellOffsetX int, cellOffsetY int) (gridPoint, int) {
+func (grid *Grid) renderColumn(ctx *DrawContext, screenViewPort gridRect, cellX int, cellY int, cellOffsetX int, cellOffsetY int) (gridPoint, int) {
 
     // The top-left position of the column
     screenX := int(screenViewPort.x1)
@@ -251,7 +253,7 @@ func (grid *Grid) renderColumn(screenViewPort gridRect, cellX int, cellY int, ce
         
         cellText, cellFg, cellBg := grid.getCellData(cellX, cellY)
 
-        grid.renderCell(newGridRect(cellOffsetX, cellOffsetY, colWidth - cellOffsetX, rowHeight),
+        grid.renderCell(ctx, newGridRect(cellOffsetX, cellOffsetY, colWidth - cellOffsetX, rowHeight),
                 screenX, screenY, cellText, cellFg, cellBg)  // termbox.AttrReverse, termbox.AttrReverse
 
         cellY++
@@ -266,13 +268,13 @@ func (grid *Grid) renderColumn(screenViewPort gridRect, cellX int, cellY int, ce
 
 // Renders the grid.  Returns the number of cells in the X and Y direction were rendered.
 //
-func (grid *Grid) renderGrid(screenViewPort gridRect, cellX int, cellY int, cellOffsetX int, cellOffsetY int) (int, int) {
+func (grid *Grid) renderGrid(ctx *DrawContext, screenViewPort gridRect, cellX int, cellY int, cellOffsetX int, cellOffsetY int) (int, int) {
     
     var cellsHigh = 0
     var cellsWide = 0
 
     for screenViewPort.x1 < screenViewPort.x2 {
-        screenViewPort.x1, cellsHigh = grid.renderColumn(screenViewPort, cellX, cellY, cellOffsetX, cellOffsetY)
+        screenViewPort.x1, cellsHigh = grid.renderColumn(ctx, screenViewPort, cellX, cellY, cellOffsetX, cellOffsetY)
         cellX = cellX + 1
         cellsWide++
         cellOffsetX = 0
@@ -316,9 +318,9 @@ func (grid *Grid) pointToCell(x int, y int) (cellX int, cellY int, posX int, pos
 /**
  * Redraws the grid.
  */
-func (grid *Grid) Redraw(x int, y int, w int, h int) {
-    viewportRect := newGridRect(x, y, x + w, y + h)
-    grid.cellsWide, grid.cellsHigh = grid.renderGrid(viewportRect, 0, 0, 0, 0)
+func (grid *Grid) Redraw(ctx *DrawContext) {
+    viewportRect := newGridRect(0, 0, ctx.W, ctx.H)
+    grid.cellsWide, grid.cellsHigh = grid.renderGrid(ctx, viewportRect, 0, 0, 0, 0)
 }
 
 // --------------------------------------------------------------------------------------------

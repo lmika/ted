@@ -98,9 +98,18 @@ func (ui *Ui) redrawInternal(width, height int) {
 
 // Enter the UI loop
 func (ui *Ui) Loop() {
-    //for {
+    for {
         ui.Redraw()
-        ui.driver.WaitForEvent()
+        event := ui.driver.WaitForEvent()
+
+        // TODO: If the event is a key-press, do something.
+        if event.Type == EventKeyPress {
+            return
+        } else if event.Type == EventResize {
+
+            // HACK: Find another way to refresh the size of the screen to prevent a full redraw.
+            ui.driver.Sync()
+        }
 
         /*
         if event.Type == termbox.EventResize {
@@ -125,7 +134,7 @@ func (ui *Ui) Loop() {
             //return UiEvent{EventKeyPress, 0}
         }
         */
-    //}
+    }
     
     // XXX: Workaround for bug in compiler
 }

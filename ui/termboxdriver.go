@@ -38,6 +38,14 @@ func (td *TermboxDriver) Sync() {
 
 // Wait for an event
 func (td *TermboxDriver) WaitForEvent() Event {
-    termbox.PollEvent()
-    return Event{}
+    tev := termbox.PollEvent()
+
+    switch tev.Type {
+    case termbox.EventResize:
+        return Event{EventResize, 0}
+    case termbox.EventKey:
+        return Event{EventKeyPress, 0}
+    default:
+        return Event{EventNone, 0}
+    }
 }

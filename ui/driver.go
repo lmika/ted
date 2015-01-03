@@ -29,8 +29,13 @@ const (
 type    EventType   int
 
 const (
+    EventNone       EventType   =   iota
+
+    // Event when the window is resized
+    EventResize
+    
     // Event indicating a key press.  The event parameter is the key scancode?
-    EventKeyPress   EventType   =   iota
+    EventKeyPress
 )
 
 // Data from an event callback.

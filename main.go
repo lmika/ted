@@ -17,7 +17,9 @@ func main() {
     statusLayout.Append(&ui.StatusBar{"Another", "Component"})
     statusLayout.Append(&ui.StatusBar{"Third", "Test"})
 
-    clientArea := &ui.RelativeLayout{ South: statusLayout }
+    grid := ui.NewGrid(&ui.TestModel{})
+
+    clientArea := &ui.RelativeLayout{ Client: grid, South: statusLayout }
 
     uiManager.SetRootComponent(clientArea)
 

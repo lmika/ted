@@ -71,6 +71,13 @@ func (dc *DrawContext) DrawRune(x, y int, ch rune) {
     }
 }
 
+// Draws a rune at a local point X, Y with specific foreground and background attributes
+func (dc *DrawContext) DrawRuneWithAttrs(x, y int, ch rune, fa, ba Attribute) {
+    if rx, ry, isWithinContext := dc.localPointToRealPoint(x, y); isWithinContext {
+        dc.driver.SetCell(rx, ry, ch, fa, ba)
+    }
+}
+
 // Converts a local point to a real point.  If the point is within the context, also returns true
 func (dc *DrawContext) localPointToRealPoint(x, y int) (int, int, bool) {
     rx, ry := x + dc.X, y + dc.Y

@@ -323,6 +323,20 @@ func (grid *Grid) Redraw(ctx *DrawContext) {
     grid.cellsWide, grid.cellsHigh = grid.renderGrid(ctx, viewportRect, 0, 0, 0, 0)
 }
 
+// Called when the component has focus and a key has been pressed
+func (grid *Grid) KeyPressed(key rune) {
+    if (key == 'i') || (key == KeyArrowUp) {
+        grid.MoveBy(0, -1)
+    } else if (key == 'k') || (key == KeyArrowDown) {
+        grid.MoveBy(0, 1)
+    } else if (key == 'j') || (key == KeyArrowLeft) {
+        grid.MoveBy(-1, 0)
+    } else if (key == 'l') || (key == KeyArrowRight) {
+        grid.MoveBy(1, 0)
+    }
+}
+
+
 // --------------------------------------------------------------------------------------------
 // Test Model
 

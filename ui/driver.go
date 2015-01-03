@@ -25,6 +25,68 @@ const (
     AttrReverse
 )
 
+
+// Special keys
+const (
+    KeyF1           rune = 0x8000 + iota
+    KeyF2
+    KeyF3
+    KeyF4
+    KeyF5
+    KeyF6
+    KeyF7
+    KeyF8
+    KeyF9
+    KeyF10
+    KeyF11
+    KeyF12
+    KeyInsert
+    KeyDelete
+    KeyHome
+    KeyEnd
+    KeyPgup
+    KeyPgdn
+    KeyArrowUp
+    KeyArrowDown
+    KeyArrowLeft
+    KeyArrowRight
+
+    KeyCtrlSpace
+    KeyCtrlA
+    KeyCtrlB
+    KeyCtrlC
+    KeyCtrlD
+    KeyCtrlE
+    KeyCtrlF
+    KeyCtrlG
+    KeyCtrlH
+    KeyCtrlI
+    KeyCtrlJ
+    KeyCtrlK
+    KeyCtrlL
+    KeyCtrlM
+    KeyCtrlN
+    KeyCtrlO
+    KeyCtrlP
+    KeyCtrlQ
+    KeyCtrlR
+    KeyCtrlS
+    KeyCtrlT
+    KeyCtrlU
+    KeyCtrlV
+    KeyCtrlW
+    KeyCtrlX
+    KeyCtrlY
+    KeyCtrlZ
+    KeyCtrl3
+    KeyCtrl4
+    KeyCtrl5
+    KeyCtrl6
+    KeyCtrl7
+    KeyCtrl8
+    KeySpace
+)
+
 // The type of events supported by the driver
 type    EventType   int
 
@@ -34,14 +96,14 @@ const (
     // Event when the window is resized
     EventResize
     
-    // Event indicating a key press.  The event parameter is the key scancode?
+    // Event indicating a key press.  The key is set in Ch
     EventKeyPress
 )
 
 // Data from an event callback.
 type Event struct {
     Type            EventType
-    Par             int
+    Ch              rune
 }
 
 

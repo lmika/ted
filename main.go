@@ -22,6 +22,7 @@ func main() {
     clientArea := &ui.RelativeLayout{ Client: grid, South: statusLayout }
 
     uiManager.SetRootComponent(clientArea)
+    uiManager.SetFocusedComponent(grid)
 
     uiManager.Loop()
     /*

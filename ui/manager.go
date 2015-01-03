@@ -11,6 +11,7 @@ type Ui struct {
 
     // The root component
     rootComponent       UiComponent
+    focusedComponent    FocusableComponent
 
     drawContext         *DrawContext
     driver              Driver
@@ -61,6 +62,11 @@ func (ui *Ui) SetRootComponent(comp UiComponent) {
     ui.Remeasure()
 }
 
+// Sets the focused component
+func (ui *Ui) SetFocusedComponent(newFocused FocusableComponent) {
+    ui.focusedComponent = newFocused
+}
+
 // Remeasures the UI
 func (ui *Ui) Remeasure() {
     ui.drawContext.X = 0
@@ -104,7 +110,9 @@ func (ui *Ui) Loop() {
 
         // TODO: If the event is a key-press, do something.
         if event.Type == EventKeyPress {
-            return
+            if ui.focusedComponent != nil {
+                ui.focusedComponent.KeyPressed(event.Ch)
+            }
         } else if event.Type == EventResize {
 
             // HACK: Find another way to refresh the size of the screen to prevent a full redraw.

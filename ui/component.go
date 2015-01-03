@@ -20,6 +20,13 @@ type UiComponent interface {
     Remeasure(w, h int) (int, int)
 }
 
+// A component implementing this interface can be given focus and will receive keyboard events.
+type FocusableComponent interface {
+    
+    // Called when the component has focus and a key has been pressed
+    KeyPressed(key rune)
+}
+
 
 // ==========================================================================
 // UI context.

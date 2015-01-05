@@ -13,7 +13,13 @@ type TermboxDriver struct {
 
 // Initializes the driver.  Returns an error if there was an error
 func (td *TermboxDriver) Init() error {
-    return termbox.Init()
+    err := termbox.Init()
+    if err != nil {
+        return err
+    }
+
+    termbox.SetInputMode(termbox.InputAlt)
+    return nil
 }
 
 // Closes the driver
@@ -42,23 +48,35 @@ func (td *TermboxDriver) WaitForEvent() Event {
 
     switch tev.Type {
     case termbox.EventResize:
-        return Event{EventResize, 0}
+        return Event{EventResize, 0, 0}
     case termbox.EventKey:
+        mod := 0
+        if tev.Mod & termbox.ModAlt != 0 {
+            mod = ModKeyAlt
+        }
         if tev.Ch != 0 {
-            return Event{EventKeyPress, tev.Ch}
+            return Event{EventKeyPress, mod, tev.Ch}
         } else if spec, hasSpec := termboxKeysToSpecialKeys[tev.Key] ; hasSpec {
-            return Event{EventKeyPress, spec}
+            return Event{EventKeyPress, mod, spec}
         } else {
-            return Event{EventNone, 0}
+            return Event{EventNone, mod, 0}
         }
     default:
-        return Event{EventNone, 0}
+        return Event{EventNone, 0, 0}
     }
 }
+
+// Move the position of the cursor
+func (td *TermboxDriver) SetCursor(x, y int) {
+    termbox.SetCursor(x, y)
+}
+
 
 
 // Map from termbox Keys to driver key runes
 var termboxKeysToSpecialKeys = map[termbox.Key]rune {
+    termbox.KeySpace: ' ',
+
     termbox.KeyF1: KeyF1,
     termbox.KeyF2: KeyF2,
     termbox.KeyF3: KeyF3,
@@ -114,6 +132,5 @@ var termboxKeysToSpecialKeys = map[termbox.Key]rune {
     termbox.KeyCtrl5: KeyCtrl5,
     termbox.KeyCtrl6: KeyCtrl6,
     termbox.KeyCtrl7: KeyCtrl7,
-    termbox.KeySpace: KeySpace,
     termbox.KeyCtrl8: KeyCtrl8,
 }

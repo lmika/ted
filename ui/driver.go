@@ -28,30 +28,7 @@ const (
 
 // Special keys
 const (
-    KeyF1           rune = 0x8000 + iota
-    KeyF2
-    KeyF3
-    KeyF4
-    KeyF5
-    KeyF6
-    KeyF7
-    KeyF8
-    KeyF9
-    KeyF10
-    KeyF11
-    KeyF12
-    KeyInsert
-    KeyDelete
-    KeyHome
-    KeyEnd
-    KeyPgup
-    KeyPgdn
-    KeyArrowUp
-    KeyArrowDown
-    KeyArrowLeft
-    KeyArrowRight
-
-    KeyCtrlSpace
+    KeyCtrlSpace    rune = 0x8000 + iota
     KeyCtrlA
     KeyCtrlB
     KeyCtrlC
@@ -84,7 +61,33 @@ const (
     KeyCtrl6
     KeyCtrl7
     KeyCtrl8
-    KeySpace
+
+    KeyF1           
+    KeyF2
+    KeyF3
+    KeyF4
+    KeyF5
+    KeyF6
+    KeyF7
+    KeyF8
+    KeyF9
+    KeyF10
+    KeyF11
+    KeyF12
+    KeyInsert
+    KeyDelete
+    KeyHome
+    KeyEnd
+    KeyPgup
+    KeyPgdn
+    KeyArrowUp
+    KeyArrowDown
+    KeyArrowLeft
+    KeyArrowRight
+
+    KeyBackspace = KeyCtrlH
+    KeyBackspace2 = KeyCtrl8
+    KeyEnter = KeyCtrlM
 )
 
 // The type of events supported by the driver
@@ -96,13 +99,19 @@ const (
     // Event when the window is resized
     EventResize
     
-    // Event indicating a key press.  The key is set in Ch
+    // Event indicating a key press.  The key is set in Ch and modifications
+    // are set in Or
     EventKeyPress
+)
+
+const (
+    ModKeyAlt       int         = (1 << iota)
 )
 
 // Data from an event callback.
 type Event struct {
     Type            EventType
+    Par             int
     Ch              rune
 }
 
@@ -127,6 +136,7 @@ type Driver interface {
 
     // Wait for an event
     WaitForEvent() Event
-}
 
-// 
+    // Move the position of the cursor
+    SetCursor(x, y int)
+}

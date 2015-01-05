@@ -12,17 +12,21 @@ func main() {
     defer uiManager.Close()
 
 
+    cmdText := &ui.TextEntry{ Prompt: "Enter: " }
+
     statusLayout := &ui.VertLinearLayout{}
     statusLayout.Append(&ui.StatusBar{"Test", "Component"})
-    statusLayout.Append(&ui.StatusBar{"Another", "Component"})
-    statusLayout.Append(&ui.StatusBar{"Third", "Test"})
+    statusLayout.Append(cmdText)
+    //statusLayout.Append(&ui.StatusBar{"Another", "Component"})
+    //statusLayout.Append(&ui.StatusBar{"Third", "Test"})
 
     grid := ui.NewGrid(&ui.TestModel{})
 
     clientArea := &ui.RelativeLayout{ Client: grid, South: statusLayout }
 
     uiManager.SetRootComponent(clientArea)
-    uiManager.SetFocusedComponent(grid)
+    //uiManager.SetFocusedComponent(grid)
+    uiManager.SetFocusedComponent(cmdText)
 
     uiManager.Loop()
     /*

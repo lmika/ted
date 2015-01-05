@@ -3,11 +3,6 @@
 package ui
 
 
-// The set of event types supported by the UI package.
-
-
-
-
 // An interface of a UI component.
 type UiComponent interface {
 
@@ -24,44 +19,5 @@ type UiComponent interface {
 type FocusableComponent interface {
     
     // Called when the component has focus and a key has been pressed
-    KeyPressed(key rune)
+    KeyPressed(key rune, mod int)
 }
-
-
-// ==========================================================================
-// UI context.
-
-
-
-
-// ==========================================================================
-// Status bar component
-
-/*
-type UiStatusBar struct {
-    left    string          // Left aligned string
-    right   string          // Right aligned string
-}
-
-// Minimum dimensions
-func (sbar *UiStatusBar) RequestDims() (int, int) {
-    return -1, 2
-}
-
-// Status bar redraw
-func (sbar *UiStatusBar) Redraw(x int, y int, w int, h int) {
-    leftLen := len(sbar.left)
-    rightLen := len(sbar.right)
-    rightPos := w - rightLen
-    
-    for x1 := 0; x1 < w; x1++ {
-        var runeToPrint rune = ' '
-        if x1 < leftLen {
-            runeToPrint = rune(sbar.left[x1])
-        } else if x1 >= rightPos {
-            runeToPrint = rune(sbar.right[x1 - rightPos])
-        }
-        termbox.SetCell(x1, y, runeToPrint, termbox.AttrReverse, termbox.AttrReverse)
-    }
-}
-*/

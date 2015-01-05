@@ -78,6 +78,13 @@ func (dc *DrawContext) DrawRuneWithAttrs(x, y int, ch rune, fa, ba Attribute) {
     }
 }
 
+// Set the position of the cursor
+func (dc *DrawContext) SetCursorPosition(x, y int) {
+    if rx, ry, isWithinContext := dc.localPointToRealPoint(x, y); isWithinContext {
+        dc.driver.SetCursor(rx, ry)
+    }
+}
+
 // Converts a local point to a real point.  If the point is within the context, also returns true
 func (dc *DrawContext) localPointToRealPoint(x, y int) (int, int, bool) {
     rx, ry := x + dc.X, y + dc.Y

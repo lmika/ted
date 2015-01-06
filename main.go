@@ -11,8 +11,15 @@ func main() {
     }
     defer uiManager.Close()
 
+    frame := NewFrame(uiManager)
+    NewSession(frame)
 
-    cmdText := &ui.TextEntry{ Prompt: "Enter: " }
+    uiManager.SetRootComponent(frame.RootComponent())
+    frame.EnterMode(GridMode)
+
+    uiManager.Loop()
+/*
+    cmdText := &ui.TextEntry{Prompt: "Enter: "}
 
     statusLayout := &ui.VertLinearLayout{}
     statusLayout.Append(&ui.StatusBar{"Test", "Component"})
@@ -25,10 +32,11 @@ func main() {
     clientArea := &ui.RelativeLayout{ Client: grid, South: statusLayout }
 
     uiManager.SetRootComponent(clientArea)
-    //uiManager.SetFocusedComponent(grid)
-    uiManager.SetFocusedComponent(cmdText)
+    uiManager.SetFocusedComponent(grid)
+    //uiManager.SetFocusedComponent(cmdText)
 
     uiManager.Loop()
+*/
     /*
     uiCtx, _ := NewUI()
 

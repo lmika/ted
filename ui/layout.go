@@ -61,6 +61,29 @@ func (vl *VertLinearLayout) Remeasure(w, h int) (int, int) {
 }
 
 
+
+// A layout component which defers calls to the nested component.  If no control is defined,
+// will not draw itself.  Used for switching controls dynamically.
+type ProxyLayout struct {
+    Component                           UiComponent
+}
+
+func (pl *ProxyLayout) Remeasure(w, h int) (int, int) {
+    if pl.Component != nil {
+        return pl.Component.Remeasure(w, h)
+    } else {
+        return 0, 0
+    }
+}
+
+func (pl *ProxyLayout) Redraw(context *DrawContext) {
+    if pl.Component != nil {
+        pl.Component.Redraw(context)
+    }
+}
+
+
+
 // A relative layout component.  This has a "client" component, bordered by a north,
 // south, east and west component.  The N,S,E,W components will be provided with the full dimensions
 // whereas the client component will be provided with the remaining size.  Each one of the components

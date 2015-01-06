@@ -4,6 +4,30 @@ package ui
 
 import "unicode"
 
+
+// A text component.  This simply renders a text string.
+type TextView struct {
+
+    // The string to render
+    Text    string
+}
+
+// Minimum dimensions
+func (tv *TextView) Remeasure(w, h int) (int, int) {
+    return w, 1
+}
+
+// Status bar redraw
+func (tv *TextView) Redraw(context *DrawContext) {
+    context.SetFgAttr(0)
+    context.SetBgAttr(0)
+
+    context.HorizRule(0, ' ')
+    context.Print(0, 0, tv.Text)
+}
+
+
+
 // Status bar component.  This component displays text on the left and right of it's
 // allocated space.
 type StatusBar struct {

@@ -30,7 +30,7 @@ func NewFrame(uiManager *ui.Ui) *Frame {
         uiManager: uiManager,
     }
 
-    frame.grid = ui.NewGrid(&ui.TestModel{})
+    frame.grid = ui.NewGrid(nil)
     frame.messageView = &ui.TextView{"Hello"}
     frame.statusBar = &ui.StatusBar{"Test", "Status"}
     frame.textEntrySwitch = &ui.ProxyLayout{frame.messageView}
@@ -48,6 +48,11 @@ func NewFrame(uiManager *ui.Ui) *Frame {
 // Returns the root component of the frame
 func (frame *Frame) RootComponent() ui.UiComponent {
     return frame.clientArea
+}
+
+// Sets the current model of the frame
+func (frame *Frame) SetModel(model ui.GridModel) {
+    frame.grid.SetModel(model)
 }
 
 // Returns the grid component

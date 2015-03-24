@@ -90,7 +90,7 @@ func (cm *CommandMapping) RegisterViewCommands() {
         _, cellY := grid.CellPosition()
         dimX, _ := grid.Model().Dimensions()
         grid.MoveTo(dimX - 1, cellY)
-    }))        
+    }))
 }
 
 // Registers the standard view key bindings.  These commands require the frame
@@ -112,6 +112,8 @@ func (cm *CommandMapping) RegisterViewKeyBindings() {
     cm.MapKey(ui.KeyArrowDown, cm.Command("move-down"))
     cm.MapKey(ui.KeyArrowLeft, cm.Command("move-left"))
     cm.MapKey(ui.KeyArrowRight, cm.Command("move-right"))
+
+    cm.MapKey(':', cm.Command("enter-command"))
 }
 
 

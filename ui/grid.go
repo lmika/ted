@@ -78,6 +78,11 @@ func (grid *Grid) Model() GridModel {
     return grid.model
 }
 
+// Sets the model
+func (grid *Grid) SetModel(model GridModel) {
+    grid.model = model
+}
+
 /**
  * Shifts the viewport of the grid.
  */

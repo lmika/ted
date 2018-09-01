@@ -11,11 +11,9 @@ func main() {
 	}
 	defer uiManager.Close()
 
-	model := &StdModel{}
-	model.Resize(5, 5)
-
 	frame := NewFrame(uiManager)
-	NewSession(uiManager, frame, model)
+	session := NewSession(uiManager, frame, CsvFileModelSource{"test.csv"})
+	session.LoadFromSource()
 
 	uiManager.SetRootComponent(frame.RootComponent())
 	frame.enterMode(GridMode)

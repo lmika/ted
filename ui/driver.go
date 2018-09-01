@@ -87,6 +87,7 @@ const (
 	KeyBackspace  = KeyCtrlH
 	KeyBackspace2 = KeyCtrl8
 	KeyEnter      = KeyCtrlM
+	KeyEsc        = KeyCtrl3
 )
 
 // The type of events supported by the driver
@@ -116,7 +117,6 @@ type Event struct {
 
 // The terminal driver interface.
 type Driver interface {
-
 	// Initializes the driver.  Returns an error if there was an error
 	Init() error
 

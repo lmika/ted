@@ -2,6 +2,7 @@ package main
 
 import (
 	"bitbucket.org/lmika/ted-v2/ui"
+	"fmt"
 )
 
 const (
@@ -53,6 +54,23 @@ func (cm *CommandMapping) KeyMapping(key rune) *Command {
 	return cm.KeyMappings[key]
 }
 
+// Evaluate a command
+func (cm *CommandMapping) Eval(ctx *CommandContext, expr string) error {
+	// TODO: Use propper expression language here
+	cmd := cm.Commands[expr]
+	if cmd != nil {
+		return cmd.Do(ctx)
+	}
+
+	return fmt.Errorf("no such command: %v", expr)
+}
+
+func (cm *CommandMapping) DoEval(ctx *CommandContext, expr string) {
+	if err := cm.Eval(ctx, expr); err != nil {
+		ctx.ShowError(err)
+	}
+}
+
 // Registers the standard view navigation commands.  These commands require the frame
 func (cm *CommandMapping) RegisterViewCommands() {
 	cm.Define("move-down", "Moves the cursor down one row", "", gridNavOperation(func(grid *ui.Grid) { grid.MoveBy(0, 1) }))
@@ -87,8 +105,8 @@ func (cm *CommandMapping) RegisterViewCommands() {
 	}))
 
 	cm.Define("enter-command", "Enter command", "", func(ctx *CommandContext) error {
-		ctx.Frame().Prompt(": ", func(res string) {
-			ctx.Frame().Message("Command = " + res)
+		ctx.Frame().Prompt(":", func(res string) {
+			cm.DoEval(ctx, res)
 		})
 		return nil
 	})
@@ -104,10 +122,38 @@ func (cm *CommandMapping) RegisterViewCommands() {
 		return nil
 	})
 
+	cm.Define("save", "Save current file", "", func(ctx *CommandContext) error {
+		wSource, isWSource := ctx.Session().Source.(WritableModelSource)
+		if !isWSource {
+			return fmt.Errorf("model is not writable")
+		}
+
+		if err := wSource.Write(ctx.Session().Model); err != nil {
+			return err
+		}
+
+		ctx.Frame().Message("Wrote " + wSource.String())
+		return nil
+	})
+
 	cm.Define("quit", "Quit TED", "", func(ctx *CommandContext) error {
 		ctx.Session().UIManager.Shutdown()
 		return nil
 	})
+
+	cm.Define("save-and-quit", "Save current file, then quit", "", func(ctx *CommandContext) error {
+		if err := cm.Eval(ctx, "save"); err != nil {
+			return nil
+		}
+
+		return cm.Eval(ctx, "quit")
+	})
+
+
+	// Aliases
+	cm.Commands["w"] = cm.Command("save")
+	cm.Commands["q"] = cm.Command("quit")
+	cm.Commands["wq"] = cm.Command("save-and-quit")
 }
 
 // Registers the standard view key bindings.  These commands require the frame
@@ -133,8 +179,6 @@ func (cm *CommandMapping) RegisterViewKeyBindings() {
 	cm.MapKey('e', cm.Command("set-cell"))
 
 	cm.MapKey(':', cm.Command("enter-command"))
-
-	cm.MapKey('q', cm.Command("quit"))
 }
 
 // A nativation command factory.  This will perform the passed in operation with the current grid and

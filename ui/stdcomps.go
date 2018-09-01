@@ -2,7 +2,9 @@
 
 package ui
 
-import "unicode"
+import (
+	"unicode"
+	)
 
 // A text component.  This simply renders a text string.
 type TextView struct {
@@ -58,6 +60,9 @@ type TextEntry struct {
 
 	// Called when the user presses Enter
 	OnEntry func(val string)
+
+	// Called when the user presses Esc or CtrlC
+	OnCancel func()
 }
 
 func (te *TextEntry) Remeasure(w, h int) (int, int) {
@@ -127,11 +132,16 @@ func (te *TextEntry) KeyPressed(key rune, mod int) {
 	} else if key == KeyDelete {
 		te.removeCharAtPos(te.cursorOffset)
 	} else if key == KeyEnter {
-		//panic("Entered text: '" + te.value + "'")
 		if te.OnEntry != nil {
 			te.OnEntry(te.value)
 		}
+	} else if key == KeyCtrlC {
+		if te.OnCancel != nil {
+			te.OnCancel()
+		}
 	}
+
+	//panic(fmt.Sprintf("Entered key: '%x', mod: '%x'", key, mod))
 }
 
 // Backspace

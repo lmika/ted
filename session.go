@@ -6,14 +6,16 @@ import "bitbucket.org/lmika/ted-v2/ui"
 // the interaction between the two and the user.
 type Session struct {
 	Model     Model
+	Source    ModelSource
 	Frame     *Frame
 	Commands  *CommandMapping
 	UIManager *ui.Ui
 }
 
-func NewSession(uiManager *ui.Ui, frame *Frame, model Model) *Session {
+func NewSession(uiManager *ui.Ui, frame *Frame, source ModelSource) *Session {
 	session := &Session{
-		Model:     model,
+		Model:     nil,
+		Source:	   source,
 		Frame:     frame,
 		Commands:  NewCommandMapping(),
 		UIManager: uiManager,
@@ -28,6 +30,17 @@ func NewSession(uiManager *ui.Ui, frame *Frame, model Model) *Session {
 	frame.Session = session
 
 	return session
+}
+
+// LoadFromSource loads the model from the source, replacing the existing model
+func (session *Session) LoadFromSource() error {
+	newModel, err := session.Source.Read()
+	if err != nil {
+		return err
+	}
+
+	session.Model = newModel
+	return nil
 }
 
 // Input from the frame
@@ -57,6 +70,13 @@ func (scc *CommandContext) Session() *Session {
 
 func (scc *CommandContext) Frame() *Frame {
 	return scc.session.Frame
+}
+
+// Error displays an error if err is not nil
+func (scc *CommandContext) ShowError(err error) {
+	if err != nil {
+		scc.Frame().Message(err.Error())
+	}
 }
 
 // Session grid model

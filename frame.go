@@ -102,14 +102,18 @@ func (frame *Frame) Prompt(prompt string, callback func(res string)) {
 	frame.textEntry.Prompt = prompt
 	frame.textEntry.SetValue("")
 
+	frame.textEntry.OnCancel = frame.exitEntryMode
 	frame.textEntry.OnEntry = func(res string) {
-		frame.textEntry.OnEntry = nil
-		frame.setMode(GridMode)
-
+		frame.exitEntryMode()
 		callback(res)
 	}
 
 	frame.setMode(EntryMode)
+}
+
+func (frame *Frame) exitEntryMode() {
+	frame.textEntry.OnEntry = nil
+	frame.setMode(GridMode)
 }
 
 // Show a message.  This will switch the bottom to the messageView and select the frame

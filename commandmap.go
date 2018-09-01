@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bitbucket.org/lmika/ted-v2/ui"
+	"github.com/lmika/ted/ui"
 	"fmt"
 )
 

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bitbucket.org/lmika/ted-v2/ui"
+	"github.com/lmika/ted/ui"
 )
 
 type Mode int
@@ -38,8 +38,8 @@ func NewFrame(uiManager *ui.Ui) *Frame {
 	}
 
 	frame.grid = ui.NewGrid(nil)
-	frame.messageView = &ui.TextView{"Hello"}
-	frame.statusBar = &ui.StatusBar{"Test", "Status"}
+	frame.messageView = &ui.TextView{""}
+	frame.statusBar = &ui.StatusBar{"Test", ""}
 	frame.textEntrySwitch = &ui.ProxyLayout{frame.messageView}
 	frame.textEntry = &ui.TextEntry{}
 
@@ -71,6 +71,8 @@ func (frame *Frame) Grid() *ui.Grid {
 func (frame *Frame) enterMode(mode Mode) {
 	switch mode {
 	case GridMode:
+		frame.statusBar.Left = frame.Session.Source.String()
+
 		frame.uiManager.SetFocusedComponent(frame)
 	case EntryMode:
 		frame.textEntrySwitch.Component = frame.textEntry

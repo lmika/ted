@@ -1,6 +1,6 @@
 package main
 
-import "bitbucket.org/lmika/ted-v2/ui"
+import "github.com/lmika/ted/ui"
 
 // The session is responsible for managing the UI and the model and handling
 // the interaction between the two and the user.
@@ -14,7 +14,7 @@ type Session struct {
 
 func NewSession(uiManager *ui.Ui, frame *Frame, source ModelSource) *Session {
 	session := &Session{
-		Model:     nil,
+		Model:     NewSingleCellStdModel(),
 		Source:	   source,
 		Frame:     frame,
 		Commands:  NewCommandMapping(),
@@ -33,14 +33,14 @@ func NewSession(uiManager *ui.Ui, frame *Frame, source ModelSource) *Session {
 }
 
 // LoadFromSource loads the model from the source, replacing the existing model
-func (session *Session) LoadFromSource() error {
+func (session *Session) LoadFromSource() {
 	newModel, err := session.Source.Read()
 	if err != nil {
-		return err
+		session.Frame.Message(err.Error())
+		return
 	}
 
 	session.Model = newModel
-	return nil
 }
 
 // Input from the frame

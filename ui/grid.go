@@ -179,7 +179,7 @@ func (grid *Grid) getCellData(cellX, cellY int) (text string, fg, bg Attribute) 
 				return grid.model.CellValue(modelCellX, modelCellY), 0, 0
 			}
 		} else {
-			return "~", ColorBlue | AttrBold, 0
+			return "~", ColorBlue, 0
 		}
 	}
 }
@@ -203,7 +203,7 @@ func (grid *Grid) getCellDimensions(cellX, cellY int) (width, height int) {
 	if (modelCellY >= 0) && (modelCellY < modelMaxY) {
 		cellHeight = grid.model.RowHeight(modelCellY)
 	} else {
-		cellHeight = 2
+		cellHeight = 1
 	}
 
 	if (cellX == 0) && (cellY == 0) {

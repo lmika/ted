@@ -36,6 +36,11 @@ func (s CsvFileModelSource) String() string {
 
 // Read the model from the given source
 func (s CsvFileModelSource) Read() (Model, error) {
+	// Check if the file exists.  If not, return an empty model
+	if _, err := os.Stat(s.Filename); os.IsNotExist(err) {
+		return NewSingleCellStdModel(), nil
+	}
+
 	f, err := os.Open(s.Filename)
 	if err != nil {
 		return nil, err

@@ -11,6 +11,15 @@ type StdModel struct {
 	dirty bool
 }
 
+//
+func NewSingleCellStdModel() *StdModel {
+	sm := new(StdModel)
+	sm.appendStr([]string { "" })
+	sm.dirty = false
+
+	return sm
+}
+
 /**
  * The dimensions of the model (height, width).
  */
@@ -73,15 +82,16 @@ func (sm *StdModel) appendStr(row []string) {
 		sm.Resize(len(sm.Cells), len(row))
 		cols = len(sm.Cells[0])
 	}
+
 	cells := sm.strSliceToCell(row, cols)
 	sm.Cells = append(sm.Cells, cells)
 }
 
 func (sm *StdModel) strSliceToCell(row []string, targetRowLen int) []Cell {
 	cs := make([]Cell, targetRowLen)
-	for i, c := range row {
-		if i < targetRowLen {
-			cs[i].Value = c
+	for i := 0; i < targetRowLen; i++ {
+		if i < len(row) {
+			cs[i].Value = row[i]
 		}
 	}
 	return cs

@@ -1,8 +1,10 @@
 package main
 
 import (
-	"github.com/lmika/ted/ui"
+	"errors"
 	"fmt"
+
+	"github.com/lmika/ted/ui"
 )
 
 const (
@@ -97,12 +99,54 @@ func (cm *CommandMapping) RegisterViewCommands() {
 		_, cellY := grid.CellPosition()
 		grid.MoveTo(0, cellY)
 	}))
-
 	cm.Define("col-right", "Moves the cursor to the right-most column", "", gridNavOperation(func(grid *ui.Grid) {
 		_, cellY := grid.CellPosition()
 		dimX, _ := grid.Model().Dimensions()
 		grid.MoveTo(dimX-1, cellY)
 	}))
+
+	cm.Define("open-right", "Inserts a column to the right of the curser", "", func(ctx *CommandContext) error {
+		grid := ctx.Frame().Grid()
+		cellX, _ := grid.CellPosition()
+
+		if rwModel, isRwModel := ctx.Session().Model.(RWModel); isRwModel {
+			height, width := rwModel.Dimensions()
+			if cellX == width-1 {
+				rwModel.Resize(height, width+1)
+			}
+			return nil
+		}
+
+		return errors.New("model is read-only")
+	})
+
+	cm.Define("open-down", "Inserts a row below the curser", "", func(ctx *CommandContext) error {
+		grid := ctx.Frame().Grid()
+		_, cellY := grid.CellPosition()
+
+		if rwModel, isRwModel := ctx.Session().Model.(RWModel); isRwModel {
+			height, width := rwModel.Dimensions()
+			if cellY == height-1 {
+				rwModel.Resize(height+1, width)
+			}
+			return nil
+		}
+
+		return errors.New("model is read-only")
+	})
+
+	cm.Define("append", "Inserts a row below the curser", "", func(ctx *CommandContext) error {
+		if err := ctx.Session().Commands.Eval(ctx, "open-down"); err != nil {
+			return err
+		}
+		if err := ctx.Session().Commands.Eval(ctx, "move-down"); err != nil {
+			return err
+		}
+
+		ctx.Session().UIManager.Redraw()
+
+		return ctx.Session().Commands.Eval(ctx, "set-cell")
+	})
 
 	cm.Define("enter-command", "Enter command", "", func(ctx *CommandContext) error {
 		ctx.Frame().Prompt(":", func(res string) {
@@ -149,7 +193,6 @@ func (cm *CommandMapping) RegisterViewCommands() {
 		return cm.Eval(ctx, "quit")
 	})
 
-
 	// Aliases
 	cm.Commands["w"] = cm.Command("save")
 	cm.Commands["q"] = cm.Command("quit")
@@ -177,6 +220,8 @@ func (cm *CommandMapping) RegisterViewKeyBindings() {
 	cm.MapKey(ui.KeyArrowRight, cm.Command("move-right"))
 
 	cm.MapKey('e', cm.Command("set-cell"))
+
+	cm.MapKey('a', cm.Command("append"))
 
 	cm.MapKey(':', cm.Command("enter-command"))
 }

@@ -15,7 +15,7 @@ type Session struct {
 func NewSession(uiManager *ui.Ui, frame *Frame, source ModelSource) *Session {
 	session := &Session{
 		Model:     NewSingleCellStdModel(),
-		Source:	   source,
+		Source:    source,
 		Frame:     frame,
 		Commands:  NewCommandMapping(),
 		UIManager: uiManager,

@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"regexp"
 
 	"github.com/lmika/ted/ui"
 )
@@ -67,11 +68,11 @@ func (cm *CommandMapping) Eval(ctx *CommandContext, expr string) error {
 	return fmt.Errorf("no such command: %v", expr)
 }
 
-func (cm *CommandMapping) DoEval(ctx *CommandContext, expr string) {
-	if err := cm.Eval(ctx, expr); err != nil {
-		ctx.ShowError(err)
-	}
-}
+//func (cm *CommandMapping) DoEval(ctx *CommandContext, expr string) {
+//	if err := cm.Eval(ctx, expr); err != nil {
+//		ctx.ShowError(err)
+//	}
+//}
 
 // Registers the standard view navigation commands.  These commands require the frame
 func (cm *CommandMapping) RegisterViewCommands() {
@@ -104,6 +105,64 @@ func (cm *CommandMapping) RegisterViewCommands() {
 		dimX, _ := grid.Model().Dimensions()
 		grid.MoveTo(dimX-1, cellY)
 	}))
+
+	cm.Define("delete-row", "Removes the currently selected row", "", func(ctx *CommandContext) error {
+		grid := ctx.Frame().Grid()
+		_, cellY := grid.CellPosition()
+
+		if rwModel, isRwModel := ctx.Session().Model.(RWModel); isRwModel {
+			DeleteRow(rwModel, cellY)
+			return nil
+		}
+
+		return errors.New("model is read-only")
+	})
+	cm.Define("delete-col", "Removes the currently selected column", "", func(ctx *CommandContext) error {
+		grid := ctx.Frame().Grid()
+		cellX, _ := grid.CellPosition()
+
+		if rwModel, isRwModel := ctx.Session().Model.(RWModel); isRwModel {
+			DeleteCol(rwModel, cellX)
+			return nil
+		}
+
+		return errors.New("model is read-only")
+	})
+	cm.Define("search", "Search for a cell", "", func(ctx *CommandContext) error {
+		ctx.Frame().Prompt(PromptOptions{ Prompt: "/" }, func(res string) error {
+			re, err := regexp.Compile(res)
+			if err != nil {
+				return fmt.Errorf("invalid regexp: %v", err)
+			}
+
+			ctx.session.LastSearch = re
+			return ctx.Session().Commands.Eval(ctx, "search-next")
+		})
+		return nil
+	})
+	cm.Define("search-next", "Goto the next cell", "", func(ctx *CommandContext) error {
+		if ctx.session.LastSearch == nil {
+			ctx.Session().Commands.Eval(ctx, "search")
+		}
+
+		height, width := ctx.session.Model.Dimensions()
+		startX, startY := ctx.Frame().Grid().CellPosition()
+		cellX, cellY := startX, startY
+
+		for {
+			cellX++
+			if cellX >= width {
+				cellX = 0
+				cellY = (cellY + 1) % height
+			}
+			if ctx.session.LastSearch.MatchString(ctx.session.Model.CellValue(cellY, cellX)) {
+				ctx.Frame().Grid().MoveTo(cellX, cellY)
+				return nil
+			} else if (cellX == startX) && (cellY == startY) {
+				return errors.New("No match found")
+			}
+		}
+	})
 
 	cm.Define("open-right", "Inserts a column to the right of the curser", "", func(ctx *CommandContext) error {
 		grid := ctx.Frame().Grid()
@@ -149,18 +208,34 @@ func (cm *CommandMapping) RegisterViewCommands() {
 	})
 
 	cm.Define("enter-command", "Enter command", "", func(ctx *CommandContext) error {
-		ctx.Frame().Prompt(":", func(res string) {
-			cm.DoEval(ctx, res)
+		ctx.Frame().Prompt(PromptOptions{ Prompt: ":" }, func(res string) error {
+			return cm.Eval(ctx, res)
 		})
 		return nil
 	})
 
-	cm.Define("set-cell", "Change the value of the selected cell", "", func(ctx *CommandContext) error {
+	cm.Define("replace-cell", "Replace the value of the selected cell", "", func(ctx *CommandContext) error {
 		grid := ctx.Frame().Grid()
 		cellX, cellY := grid.CellPosition()
 		if rwModel, isRwModel := ctx.Session().Model.(RWModel); isRwModel {
-			ctx.Frame().Prompt("> ", func(res string) {
+			ctx.Frame().Prompt(PromptOptions{ Prompt: "> " }, func(res string) error {
 				rwModel.SetCellValue(cellY, cellX, res)
+				return nil
+			})
+		}
+		return nil
+	})
+	cm.Define("edit-cell", "Modify the value of the selected cell", "", func(ctx *CommandContext) error {
+		grid := ctx.Frame().Grid()
+		cellX, cellY := grid.CellPosition()
+
+		if rwModel, isRwModel := ctx.Session().Model.(RWModel); isRwModel {
+			ctx.Frame().Prompt(PromptOptions{
+				Prompt: "> ",
+				InitialValue: grid.Model().CellValue(cellY, cellX),
+			}, func(res string) error {
+				rwModel.SetCellValue(cellY, cellX, res)
+				return nil
 			})
 		}
 		return nil
@@ -219,9 +294,15 @@ func (cm *CommandMapping) RegisterViewKeyBindings() {
 	cm.MapKey(ui.KeyArrowLeft, cm.Command("move-left"))
 	cm.MapKey(ui.KeyArrowRight, cm.Command("move-right"))
 
-	cm.MapKey('e', cm.Command("set-cell"))
+	cm.MapKey('e', cm.Command("edit-cell"))
+	cm.MapKey('r', cm.Command("replace-cell"))
 
 	cm.MapKey('a', cm.Command("append"))
+
+	cm.MapKey('D', cm.Command("delete-row"))
+
+	cm.MapKey('/', cm.Command("search"))
+	cm.MapKey('n', cm.Command("search-next"))
 
 	cm.MapKey(':', cm.Command("enter-command"))
 }

@@ -99,15 +99,28 @@ func (frame *Frame) Message(s string) {
 	frame.messageView.Text = s
 }
 
+func (frame *Frame) Error(err error) {
+	if err != nil {
+		frame.messageView.Text = err.Error()
+	}
+}
+
+type PromptOptions struct {
+	Prompt       string
+	InitialValue string
+}
+
 // Prompt the user for input.  This switches the mode to entry mode.
-func (frame *Frame) Prompt(prompt string, callback func(res string)) {
-	frame.textEntry.Prompt = prompt
-	frame.textEntry.SetValue("")
+func (frame *Frame) Prompt(options PromptOptions, callback func(res string) error) {
+	frame.textEntry.Prompt = options.Prompt
+	frame.textEntry.SetValue(options.InitialValue)
 
 	frame.textEntry.OnCancel = frame.exitEntryMode
 	frame.textEntry.OnEntry = func(res string) {
 		frame.exitEntryMode()
-		callback(res)
+		if err := callback(res); err != nil {
+			frame.Error(err)
+		}
 	}
 
 	frame.setMode(EntryMode)

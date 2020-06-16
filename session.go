@@ -1,6 +1,9 @@
 package main
 
-import "github.com/lmika/ted/ui"
+import (
+	"github.com/lmika/ted/ui"
+	"regexp"
+)
 
 // The session is responsible for managing the UI and the model and handling
 // the interaction between the two and the user.
@@ -10,6 +13,8 @@ type Session struct {
 	Frame     *Frame
 	Commands  *CommandMapping
 	UIManager *ui.Ui
+
+	LastSearch	*regexp.Regexp
 }
 
 func NewSession(uiManager *ui.Ui, frame *Frame, source ModelSource) *Session {
@@ -73,10 +78,8 @@ func (scc *CommandContext) Frame() *Frame {
 }
 
 // Error displays an error if err is not nil
-func (scc *CommandContext) ShowError(err error) {
-	if err != nil {
-		scc.Frame().Message(err.Error())
-	}
+func (scc *CommandContext) Error(err error) {
+	scc.Frame().Error(err)
 }
 
 // Session grid model

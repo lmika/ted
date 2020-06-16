@@ -110,23 +110,13 @@ func (cm *CommandMapping) RegisterViewCommands() {
 		grid := ctx.Frame().Grid()
 		_, cellY := grid.CellPosition()
 
-		if rwModel, isRwModel := ctx.Session().Model.(RWModel); isRwModel {
-			DeleteRow(rwModel, cellY)
-			return nil
-		}
-
-		return errors.New("model is read-only")
+		return ctx.ModelVC().DeleteRow(cellY)
 	})
 	cm.Define("delete-col", "Removes the currently selected column", "", func(ctx *CommandContext) error {
 		grid := ctx.Frame().Grid()
 		cellX, _ := grid.CellPosition()
 
-		if rwModel, isRwModel := ctx.Session().Model.(RWModel); isRwModel {
-			DeleteCol(rwModel, cellX)
-			return nil
-		}
-
-		return errors.New("model is read-only")
+		return ctx.ModelVC().DeleteCol(cellX)
 	})
 	cm.Define("search", "Search for a cell", "", func(ctx *CommandContext) error {
 		ctx.Frame().Prompt(PromptOptions{ Prompt: "/" }, func(res string) error {
@@ -145,7 +135,7 @@ func (cm *CommandMapping) RegisterViewCommands() {
 			ctx.Session().Commands.Eval(ctx, "search")
 		}
 
-		height, width := ctx.session.Model.Dimensions()
+		height, width := ctx.ModelVC().Model().Dimensions()
 		startX, startY := ctx.Frame().Grid().CellPosition()
 		cellX, cellY := startX, startY
 
@@ -155,7 +145,7 @@ func (cm *CommandMapping) RegisterViewCommands() {
 				cellX = 0
 				cellY = (cellY + 1) % height
 			}
-			if ctx.session.LastSearch.MatchString(ctx.session.Model.CellValue(cellY, cellX)) {
+			if ctx.session.LastSearch.MatchString(ctx.ModelVC().Model().CellValue(cellY, cellX)) {
 				ctx.Frame().Grid().MoveTo(cellX, cellY)
 				return nil
 			} else if (cellX == startX) && (cellY == startY) {
@@ -168,30 +158,22 @@ func (cm *CommandMapping) RegisterViewCommands() {
 		grid := ctx.Frame().Grid()
 		cellX, _ := grid.CellPosition()
 
-		if rwModel, isRwModel := ctx.Session().Model.(RWModel); isRwModel {
-			height, width := rwModel.Dimensions()
-			if cellX == width-1 {
-				rwModel.Resize(height, width+1)
-			}
-			return nil
+		height, width := ctx.ModelVC().Model().Dimensions()
+		if cellX == width-1 {
+			return ctx.ModelVC().Resize(height, width+1)
 		}
-
-		return errors.New("model is read-only")
+		return nil
 	})
 
 	cm.Define("open-down", "Inserts a row below the curser", "", func(ctx *CommandContext) error {
 		grid := ctx.Frame().Grid()
 		_, cellY := grid.CellPosition()
 
-		if rwModel, isRwModel := ctx.Session().Model.(RWModel); isRwModel {
-			height, width := rwModel.Dimensions()
-			if cellY == height-1 {
-				rwModel.Resize(height+1, width)
-			}
-			return nil
+		height, width := ctx.ModelVC().Model().Dimensions()
+		if cellY == height-1 {
+			return ctx.ModelVC().Resize(height+1, width)
 		}
-
-		return errors.New("model is read-only")
+		return nil
 	})
 
 	cm.Define("append", "Inserts a row below the curser", "", func(ctx *CommandContext) error {
@@ -207,6 +189,64 @@ func (cm *CommandMapping) RegisterViewCommands() {
 		return ctx.Session().Commands.Eval(ctx, "set-cell")
 	})
 
+	cm.Define("inc-col-width", "Increase the width of the current column", "", func(ctx *CommandContext) error {
+		cellX, _ := ctx.Frame().Grid().CellPosition()
+
+		attrs := ctx.ModelVC().ColAttrs(cellX)
+		attrs.Size += 2
+		ctx.ModelVC().SetColAttrs(cellX, attrs)
+		return nil
+	})
+
+	cm.Define("dec-col-width", "Decrease the width of the current column", "", func(ctx *CommandContext) error {
+		cellX, _ := ctx.Frame().Grid().CellPosition()
+
+		attrs := ctx.ModelVC().ColAttrs(cellX)
+		attrs.Size -= 2
+		if attrs.Size < 4 {
+			attrs.Size = 4
+		}
+		ctx.ModelVC().SetColAttrs(cellX, attrs)
+		return nil
+	})
+
+	cm.Define("clear-row-marker", "Clears any row markers", "", func(ctx *CommandContext) error {
+		_, cellY := ctx.Frame().Grid().CellPosition()
+
+		attrs := ctx.ModelVC().RowAttrs(cellY)
+		attrs.Marker = MarkerNone
+		ctx.ModelVC().SetRowAttrs(cellY, attrs)
+		return nil
+	})
+
+	cm.Define("mark-row-red", "Set row marker to red", "", func(ctx *CommandContext) error {
+		_, cellY := ctx.Frame().Grid().CellPosition()
+
+		attrs := ctx.ModelVC().RowAttrs(cellY)
+		attrs.Marker = MarkerRed
+		ctx.ModelVC().SetRowAttrs(cellY, attrs)
+		return nil
+	})
+
+	cm.Define("mark-row-green", "Set row marker to green", "", func(ctx *CommandContext) error {
+		_, cellY := ctx.Frame().Grid().CellPosition()
+
+		attrs := ctx.ModelVC().RowAttrs(cellY)
+		attrs.Marker = MarkerGreen
+		ctx.ModelVC().SetRowAttrs(cellY, attrs)
+		return nil
+	})
+
+	cm.Define("mark-row-blue", "Set row marker to blue", "", func(ctx *CommandContext) error {
+		_, cellY := ctx.Frame().Grid().CellPosition()
+
+		attrs := ctx.ModelVC().RowAttrs(cellY)
+		attrs.Marker = MarkerBlue
+		ctx.ModelVC().SetRowAttrs(cellY, attrs)
+		return nil
+	})
+
+
 	cm.Define("enter-command", "Enter command", "", func(ctx *CommandContext) error {
 		ctx.Frame().Prompt(PromptOptions{ Prompt: ":" }, func(res string) error {
 			return cm.Eval(ctx, res)
@@ -217,10 +257,9 @@ func (cm *CommandMapping) RegisterViewCommands() {
 	cm.Define("replace-cell", "Replace the value of the selected cell", "", func(ctx *CommandContext) error {
 		grid := ctx.Frame().Grid()
 		cellX, cellY := grid.CellPosition()
-		if rwModel, isRwModel := ctx.Session().Model.(RWModel); isRwModel {
+		if _, isRwModel := ctx.ModelVC().Model().(RWModel); isRwModel {
 			ctx.Frame().Prompt(PromptOptions{ Prompt: "> " }, func(res string) error {
-				rwModel.SetCellValue(cellY, cellX, res)
-				return nil
+				return ctx.ModelVC().SetCellValue(cellY, cellX, res)
 			})
 		}
 		return nil
@@ -229,13 +268,12 @@ func (cm *CommandMapping) RegisterViewCommands() {
 		grid := ctx.Frame().Grid()
 		cellX, cellY := grid.CellPosition()
 
-		if rwModel, isRwModel := ctx.Session().Model.(RWModel); isRwModel {
+		if _, isRwModel := ctx.ModelVC().Model().(RWModel); isRwModel {
 			ctx.Frame().Prompt(PromptOptions{
 				Prompt: "> ",
-				InitialValue: grid.Model().CellValue(cellY, cellX),
+				InitialValue: grid.Model().CellValue(cellX, cellY),
 			}, func(res string) error {
-				rwModel.SetCellValue(cellY, cellX, res)
-				return nil
+				return ctx.ModelVC().SetCellValue(cellY, cellX, res)
 			})
 		}
 		return nil
@@ -247,7 +285,7 @@ func (cm *CommandMapping) RegisterViewCommands() {
 			return fmt.Errorf("model is not writable")
 		}
 
-		if err := wSource.Write(ctx.Session().Model); err != nil {
+		if err := wSource.Write(ctx.ModelVC().Model()); err != nil {
 			return err
 		}
 
@@ -303,6 +341,14 @@ func (cm *CommandMapping) RegisterViewKeyBindings() {
 
 	cm.MapKey('/', cm.Command("search"))
 	cm.MapKey('n', cm.Command("search-next"))
+
+	cm.MapKey('0', cm.Command("clear-row-marker"))
+	cm.MapKey('1', cm.Command("mark-row-red"))
+	cm.MapKey('2', cm.Command("mark-row-green"))
+	cm.MapKey('3', cm.Command("mark-row-blue"))
+
+	cm.MapKey('{', cm.Command("dec-col-width"))
+	cm.MapKey('}', cm.Command("inc-col-width"))
 
 	cm.MapKey(':', cm.Command("enter-command"))
 }

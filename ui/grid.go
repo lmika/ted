@@ -28,6 +28,8 @@ type GridModel interface {
 	 * Returns the value of the cell a position X, Y
 	 */
 	CellValue(int, int) string
+
+	CellAttributes(int, int) (fg, bg Attribute)
 }
 
 type gridPoint int
@@ -173,10 +175,13 @@ func (grid *Grid) getCellData(cellX, cellY int) (text string, fg, bg Attribute) 
 	} else {
 		// The data from the model
 		if (modelCellX >= 0) && (modelCellY >= 0) && (modelCellX < modelMaxX) && (modelCellY < modelMaxY) {
+			value := grid.model.CellValue(modelCellX, modelCellY)
+			fg, bg := grid.model.CellAttributes(modelCellX, modelCellY)
+
 			if (modelCellX == grid.selCellX) && (modelCellY == grid.selCellY) {
-				return grid.model.CellValue(modelCellX, modelCellY), AttrReverse, AttrReverse
+				return value, fg | AttrReverse, bg | AttrReverse
 			} else {
-				return grid.model.CellValue(modelCellX, modelCellY), 0, 0
+				return value, fg, bg
 			}
 		} else {
 			return "~", ColorBlue, 0
@@ -365,7 +370,7 @@ func (grid *Grid) KeyPressed(key rune, mod int) {
 }
 
 // --------------------------------------------------------------------------------------------
-// Test Model
+// Test ModelVC
 
 type TestModel struct {
 	thing int

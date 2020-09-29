@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/lmika/shellwords"
+
 	"github.com/lmika/ted/ui"
 )
 
@@ -60,19 +62,18 @@ func (cm *CommandMapping) KeyMapping(key rune) *Command {
 // Evaluate a command
 func (cm *CommandMapping) Eval(ctx *CommandContext, expr string) error {
 	// TODO: Use propper expression language here
-	cmd := cm.Commands[expr]
+	toks := shellwords.Split(expr)
+	if len(toks) == 0 {
+		return nil
+	}
+
+	cmd := cm.Commands[toks[0]]
 	if cmd != nil {
-		return cmd.Do(ctx)
+		return cmd.Do(ctx.WithArgs(toks[1:]))
 	}
 
 	return fmt.Errorf("no such command: %v", expr)
 }
-
-//func (cm *CommandMapping) DoEval(ctx *CommandContext, expr string) {
-//	if err := cm.Eval(ctx, expr); err != nil {
-//		ctx.ShowError(err)
-//	}
-//}
 
 // Registers the standard view navigation commands.  These commands require the frame
 func (cm *CommandMapping) RegisterViewCommands() {
@@ -152,6 +153,34 @@ func (cm *CommandMapping) RegisterViewCommands() {
 				return errors.New("No match found")
 			}
 		}
+	})
+	cm.Define("x-replace", "Performs a search and replace", "", func(ctx *CommandContext) error {
+		if len(ctx.Args()) != 2 {
+			return errors.New("Usage: x-replace MATCH REPLACEMENT")
+		}
+
+		match := ctx.Args()[0]
+		repl := ctx.Args()[1]
+
+		re, err := regexp.Compile(match)
+		if err != nil {
+			return fmt.Errorf("invalid regexp: %v", err)
+		}
+
+		matchCount := 0
+		height, width := ctx.ModelVC().Model().Dimensions()
+		for r := 0; r < height; r++ {
+			for c := 0; c < width; c++ {
+				cell := ctx.ModelVC().Model().CellValue(r, c)
+				if re.FindStringIndex(cell) != nil {
+					ctx.ModelVC().SetCellValue(r, c, re.ReplaceAllString(cell, repl))
+					matchCount++
+				}
+			}
+		}
+
+		ctx.Frame().ShowMessage(fmt.Sprintf("Replaced %d matches", matchCount))
+		return nil
 	})
 
 	cm.Define("open-right", "Inserts a column to the right of the curser", "", func(ctx *CommandContext) error {

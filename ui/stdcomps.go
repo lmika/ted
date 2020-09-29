@@ -4,7 +4,7 @@ package ui
 
 import (
 	"unicode"
-	)
+)
 
 // A text component.  This simply renders a text string.
 type TextView struct {
@@ -124,6 +124,8 @@ func (te *TextEntry) KeyPressed(key rune, mod int) {
 		if mod&ModKeyAlt != 0 {
 			te.backspaceWhile(unicode.IsSpace)
 			te.backspaceWhile(func(r rune) bool { return !unicode.IsSpace(r) })
+		} else if te.cursorOffset == 0 {
+			te.cancelAndExit()
 		} else {
 			te.backspace()
 		}
@@ -136,12 +138,16 @@ func (te *TextEntry) KeyPressed(key rune, mod int) {
 			te.OnEntry(te.value)
 		}
 	} else if key == KeyCtrlC {
-		if te.OnCancel != nil {
-			te.OnCancel()
-		}
+		te.cancelAndExit()
 	}
 
 	//panic(fmt.Sprintf("Entered key: '%x', mod: '%x'", key, mod))
+}
+
+func (te *TextEntry) cancelAndExit() {
+	if te.OnCancel != nil {
+		te.OnCancel()
+	}
 }
 
 // Backspace

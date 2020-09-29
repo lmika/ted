@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/lmika/ted/ui"
 	"regexp"
+
+	"github.com/lmika/ted/ui"
 )
 
 // The session is responsible for managing the UI and the model and handling
@@ -15,7 +16,7 @@ type Session struct {
 	UIManager       *ui.Ui
 	modelController *ModelViewCtrl
 
-	LastSearch	*regexp.Regexp
+	LastSearch *regexp.Regexp
 }
 
 func NewSession(uiManager *ui.Ui, frame *Frame, source ModelSource) *Session {
@@ -61,7 +62,7 @@ func (session *Session) KeyPressed(key rune, mod int) {
 
 	cmd := session.Commands.KeyMapping(key)
 	if cmd != nil {
-		err := cmd.Do(&CommandContext{session})
+		err := cmd.Do(&CommandContext{session, nil})
 		if err != nil {
 			session.Frame.ShowMessage(err.Error())
 		}
@@ -71,6 +72,18 @@ func (session *Session) KeyPressed(key rune, mod int) {
 // The command context used by the session
 type CommandContext struct {
 	session *Session
+	args    []string
+}
+
+func (scc *CommandContext) WithArgs(args []string) *CommandContext {
+	return &CommandContext{
+		session: scc.session,
+		args:    args,
+	}
+}
+
+func (scc *CommandContext) Args() []string {
+	return scc.args
 }
 
 func (scc *CommandContext) ModelVC() *ModelViewCtrl {
@@ -125,11 +138,11 @@ func (sgm *SessionGridModel) CellAttributes(x int, y int) (fg, bg ui.Attribute) 
 	} else if colAttrs.Marker != MarkerNone {
 		return markerAttributes[colAttrs.Marker], 0
 	}
-	return 0,0
+	return 0, 0
 }
 
-var markerAttributes = map[Marker]ui.Attribute {
-	MarkerRed: ui.ColorRed,
+var markerAttributes = map[Marker]ui.Attribute{
+	MarkerRed:   ui.ColorRed,
 	MarkerGreen: ui.ColorGreen,
-	MarkerBlue: ui.ColorBlue,
+	MarkerBlue:  ui.ColorBlue,
 }

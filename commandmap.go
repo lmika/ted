@@ -119,7 +119,7 @@ func (cm *CommandMapping) RegisterViewCommands() {
 		return ctx.ModelVC().DeleteCol(cellX)
 	})
 	cm.Define("search", "Search for a cell", "", func(ctx *CommandContext) error {
-		ctx.Frame().Prompt(PromptOptions{ Prompt: "/" }, func(res string) error {
+		ctx.Frame().Prompt(PromptOptions{Prompt: "/"}, func(res string) error {
 			re, err := regexp.Compile(res)
 			if err != nil {
 				return fmt.Errorf("invalid regexp: %v", err)
@@ -246,9 +246,8 @@ func (cm *CommandMapping) RegisterViewCommands() {
 		return nil
 	})
 
-
 	cm.Define("enter-command", "Enter command", "", func(ctx *CommandContext) error {
-		ctx.Frame().Prompt(PromptOptions{ Prompt: ":" }, func(res string) error {
+		ctx.Frame().Prompt(PromptOptions{Prompt: ":"}, func(res string) error {
 			return cm.Eval(ctx, res)
 		})
 		return nil
@@ -258,8 +257,12 @@ func (cm *CommandMapping) RegisterViewCommands() {
 		grid := ctx.Frame().Grid()
 		cellX, cellY := grid.CellPosition()
 		if _, isRwModel := ctx.ModelVC().Model().(RWModel); isRwModel {
-			ctx.Frame().Prompt(PromptOptions{ Prompt: "> " }, func(res string) error {
-				return ctx.ModelVC().SetCellValue(cellY, cellX, res)
+			ctx.Frame().Prompt(PromptOptions{Prompt: "> "}, func(res string) error {
+				if err := ctx.ModelVC().SetCellValue(cellY, cellX, res); err != nil {
+					return err
+				}
+				ctx.Frame().ShowCellValue()
+				return nil
 			})
 		}
 		return nil
@@ -270,10 +273,14 @@ func (cm *CommandMapping) RegisterViewCommands() {
 
 		if _, isRwModel := ctx.ModelVC().Model().(RWModel); isRwModel {
 			ctx.Frame().Prompt(PromptOptions{
-				Prompt: "> ",
+				Prompt:       "> ",
 				InitialValue: grid.Model().CellValue(cellX, cellY),
 			}, func(res string) error {
-				return ctx.ModelVC().SetCellValue(cellY, cellX, res)
+				if err := ctx.ModelVC().SetCellValue(cellY, cellX, res); err != nil {
+					return err
+				}
+				ctx.Frame().ShowCellValue()
+				return nil
 			})
 		}
 		return nil

@@ -186,7 +186,7 @@ func (cm *CommandMapping) RegisterViewCommands() {
 
 		ctx.Session().UIManager.Redraw()
 
-		return ctx.Session().Commands.Eval(ctx, "set-cell")
+		return ctx.Session().Commands.Eval(ctx, "edit-cell")
 	})
 
 	cm.Define("inc-col-width", "Increase the width of the current column", "", func(ctx *CommandContext) error {

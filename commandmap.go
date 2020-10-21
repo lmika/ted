@@ -276,7 +276,10 @@ func (cm *CommandMapping) RegisterViewCommands() {
 	})
 
 	cm.Define("enter-command", "Enter command", "", func(ctx *CommandContext) error {
-		ctx.Frame().Prompt(PromptOptions{Prompt: ":"}, func(res string) error {
+		ctx.Frame().Prompt(PromptOptions{
+			Prompt: ":",
+			CancelOnEmptyBackspace: true,
+		}, func(res string) error {
 			return cm.Eval(ctx, res)
 		})
 		return nil
@@ -300,7 +303,15 @@ func (cm *CommandMapping) RegisterViewCommands() {
 		grid := ctx.Frame().Grid()
 		cellX, cellY := grid.CellPosition()
 
-		if _, isRwModel := ctx.ModelVC().Model().(RWModel); isRwModel {
+		if _, isRwModel := ctx.ModelVC().Model().(RWModel); !isRwModel {
+			return errors.New("Model is read-only")
+		}
+
+		if len(ctx.Args()) == 1 {
+			if err := ctx.ModelVC().SetCellValue(cellY, cellX, ctx.Args()[0]); err != nil {
+				return err
+			}
+		} else {
 			ctx.Frame().Prompt(PromptOptions{
 				Prompt:       "> ",
 				InitialValue: grid.Model().CellValue(cellX, cellY),
@@ -312,6 +323,29 @@ func (cm *CommandMapping) RegisterViewCommands() {
 				return nil
 			})
 		}
+		return nil
+	})
+	cm.Define("yank", "Yank cell value", "", func(ctx *CommandContext) error {
+		grid := ctx.Frame().Grid()
+		cellX, cellY := grid.CellPosition()
+
+		// TODO: allow ranges
+		ctx.Session().pasteBoard.SetCellValue(0, 0, grid.Model().CellValue(cellX, cellY))
+
+		return nil
+	})
+	cm.Define("paste", "Paste cell value", "", func(ctx *CommandContext) error {
+		grid := ctx.Frame().Grid()
+		cellX, cellY := grid.CellPosition()
+
+		// TODO: allow ranges
+		if _, isRwModel := ctx.ModelVC().Model().(RWModel); !isRwModel {
+			return errors.New("Model is read-only")
+		}
+		if err := ctx.ModelVC().SetCellValue(cellY, cellX, ctx.Session().pasteBoard.CellValue(0, 0)); err != nil {
+			return err
+		}
+
 		return nil
 	})
 
@@ -377,6 +411,9 @@ func (cm *CommandMapping) RegisterViewKeyBindings() {
 
 	cm.MapKey('/', cm.Command("search"))
 	cm.MapKey('n', cm.Command("search-next"))
+
+	cm.MapKey('y', cm.Command("yank"))
+	cm.MapKey('p', cm.Command("paste"))
 
 	cm.MapKey('0', cm.Command("clear-row-marker"))
 	cm.MapKey('1', cm.Command("mark-row-red"))

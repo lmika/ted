@@ -106,13 +106,16 @@ func (frame *Frame) Error(err error) {
 }
 
 type PromptOptions struct {
-	Prompt       string
-	InitialValue string
+	Prompt                 string
+	InitialValue           string
+	CancelOnEmptyBackspace bool
 }
 
 // Prompt the user for input.  This switches the mode to entry mode.
 func (frame *Frame) Prompt(options PromptOptions, callback func(res string) error) {
+	frame.textEntry.Reset()
 	frame.textEntry.Prompt = options.Prompt
+	frame.textEntry.CancelOnEmptyBackspace = options.CancelOnEmptyBackspace
 	frame.textEntry.SetValue(options.InitialValue)
 
 	frame.textEntry.OnCancel = frame.exitEntryMode

@@ -57,12 +57,21 @@ type TextEntry struct {
 	value         string
 	cursorOffset  int
 	displayOffset int
+	isDirty 	  bool
+
+	// CancelOnEmptyBackspace will cancel the text entry prompt if no other
+	// key was pressed and the prompt was empty.
+	CancelOnEmptyBackspace bool
 
 	// Called when the user presses Enter
 	OnEntry func(val string)
 
 	// Called when the user presses Esc or CtrlC
 	OnCancel func()
+}
+
+func (te *TextEntry) Reset() {
+	te.isDirty = false
 }
 
 func (te *TextEntry) Remeasure(w, h int) (int, int) {
@@ -116,16 +125,18 @@ func (te *TextEntry) KeyPressed(key rune, mod int) {
 		te.moveCursorBy(-1)
 	} else if key == KeyArrowRight {
 		te.moveCursorBy(1)
-	} else if key == KeyHome {
+	} else if (key == KeyHome) || (key == KeyCtrlA) {
 		te.moveCursorTo(0)
-	} else if key == KeyEnd {
+	} else if (key == KeyEnd) || (key == KeyCtrlE) {
 		te.moveCursorTo(len(te.value))
 	} else if (key == KeyBackspace) || (key == KeyBackspace2) {
 		if mod&ModKeyAlt != 0 {
 			te.backspaceWhile(unicode.IsSpace)
 			te.backspaceWhile(func(r rune) bool { return !unicode.IsSpace(r) })
 		} else if te.cursorOffset == 0 {
-			te.cancelAndExit()
+			if te.CancelOnEmptyBackspace && !te.isDirty {
+				te.cancelAndExit()
+			}
 		} else {
 			te.backspace()
 		}
@@ -171,6 +182,7 @@ func (te *TextEntry) backspaceWhile(guard func(r rune) bool) {
 // Kill the line.  If the cursor is at the end of the line, kill to the start.
 // Otherwise, trim the line.
 func (te *TextEntry) killLine() {
+	te.isDirty = true
 	if te.cursorOffset < len(te.value) {
 		te.value = te.value[:te.cursorOffset]
 	} else {
@@ -181,6 +193,7 @@ func (te *TextEntry) killLine() {
 
 // Inserts a rune at the cursor position
 func (te *TextEntry) insertRune(key rune) {
+	te.isDirty = true
 	if te.cursorOffset >= len(te.value) {
 		te.value += string(key)
 	} else {
@@ -191,6 +204,7 @@ func (te *TextEntry) insertRune(key rune) {
 
 // Remove the character at a specific position
 func (te *TextEntry) removeCharAtPos(pos int) {
+	te.isDirty = true
 	if (pos >= 0) && (pos < len(te.value)) {
 		te.value = te.value[:pos] + te.value[pos+1:]
 	}

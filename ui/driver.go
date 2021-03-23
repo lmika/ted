@@ -84,10 +84,10 @@ const (
 	KeyArrowLeft
 	KeyArrowRight
 
-	KeyBackspace  = KeyCtrlH
-	KeyBackspace2 = KeyCtrl8
-	KeyEnter      = KeyCtrlM
-	KeyEsc        = KeyCtrl3
+	KeyBackspace = KeyCtrlH
+	KeyBackspace2
+	KeyEnter = KeyCtrlM
+	KeyEsc   = KeyCtrl3
 )
 
 // The type of events supported by the driver

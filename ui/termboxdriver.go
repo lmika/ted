@@ -3,7 +3,7 @@
 package ui
 
 import (
-	"github.com/nsf/termbox-go"
+	"github.com/gdamore/tcell/termbox"
 )
 
 type TermboxDriver struct {
@@ -101,7 +101,6 @@ var termboxKeysToSpecialKeys = map[termbox.Key]rune{
 	termbox.KeyArrowLeft:  KeyArrowLeft,
 	termbox.KeyArrowRight: KeyArrowRight,
 
-	termbox.KeyCtrlSpace: KeyCtrlSpace,
 	termbox.KeyCtrlA:     KeyCtrlA,
 	termbox.KeyCtrlB:     KeyCtrlB,
 	termbox.KeyCtrlC:     KeyCtrlC,
@@ -133,5 +132,4 @@ var termboxKeysToSpecialKeys = map[termbox.Key]rune{
 	termbox.KeyCtrl5:     KeyCtrl5,
 	termbox.KeyCtrl6:     KeyCtrl6,
 	termbox.KeyCtrl7:     KeyCtrl7,
-	termbox.KeyCtrl8:     KeyCtrl8,
 }

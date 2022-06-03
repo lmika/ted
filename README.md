@@ -15,10 +15,14 @@ go get github.com/lmika/ted
 ## Usage
 
 ```
-ted <csvfile>
+ted [FLAGS] FILE
 ```
 
-Can either be a new CSV file, or an existing CSV file.
+Flags:
+
+- `-c <codec>` the format that the file is in.  Either `csv` or `tsv` files are supported.  Default is `csv`
+
+File can either be a new file, or an existing file.
 
 TED is similar to Vim in that it is modal.  After opening a file, the editor starts off in view mode, which permits navigating around.
 

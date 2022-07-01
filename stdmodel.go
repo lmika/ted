@@ -14,9 +14,17 @@ type StdModel struct {
 //
 func NewSingleCellStdModel() *StdModel {
 	sm := new(StdModel)
-	sm.appendStr([]string { "" })
+	sm.appendStr([]string{""})
 	sm.dirty = false
 
+	return sm
+}
+
+func NewStdModelFromSlice(str [][]string) *StdModel {
+	sm := new(StdModel)
+	for _, r := range str {
+		sm.appendStr(r)
+	}
 	return sm
 }
 
@@ -73,7 +81,7 @@ func (sm *StdModel) SetCellValue(r, c int, value string) {
 func (sm *StdModel) appendStr(row []string) {
 	if len(sm.Cells) == 0 {
 		cells := sm.strSliceToCell(row, len(row))
-		sm.Cells = [][]Cell{ cells }
+		sm.Cells = [][]Cell{cells}
 		return
 	}
 

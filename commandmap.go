@@ -187,11 +187,7 @@ func (cm *CommandMapping) RegisterViewCommands() {
 		grid := ctx.Frame().Grid()
 		cellX, _ := grid.CellPosition()
 
-		height, width := ctx.ModelVC().Model().Dimensions()
-		if cellX == width-1 {
-			return ctx.ModelVC().Resize(height, width+1)
-		}
-		return nil
+		return ctx.ModelVC().OpenRight(cellX)
 	})
 
 	cm.Define("open-down", "Inserts a row below the curser", "", func(ctx *CommandContext) error {
@@ -277,7 +273,7 @@ func (cm *CommandMapping) RegisterViewCommands() {
 
 	cm.Define("enter-command", "Enter command", "", func(ctx *CommandContext) error {
 		ctx.Frame().Prompt(PromptOptions{
-			Prompt: ":",
+			Prompt:                 ":",
 			CancelOnEmptyBackspace: true,
 		}, func(res string) error {
 			return cm.Eval(ctx, res)
@@ -407,6 +403,7 @@ func (cm *CommandMapping) RegisterViewKeyBindings() {
 
 	cm.MapKey('a', cm.Command("append"))
 
+	cm.MapKey('O', cm.Command("open-right"))
 	cm.MapKey('D', cm.Command("delete-row"))
 
 	cm.MapKey('/', cm.Command("search"))

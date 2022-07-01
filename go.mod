@@ -7,4 +7,5 @@ require (
 	github.com/lmika/shellwords v0.0.0-20140714114018-ce258dd729fe
 	github.com/mattn/go-runewidth v0.0.10 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/stretchr/testify v1.7.5 // indirect
 )

@@ -44,7 +44,9 @@ func (gvm *ModelViewCtrl) SetRowAttrs(row int, newAttrs SliceAttr) {
 }
 
 func (gvm *ModelViewCtrl) SetColAttrs(col int, newAttrs SliceAttr) {
-	gvm.colAttrs[col] = newAttrs
+	if col >= 0 && col < len(gvm.colAttrs) {
+		gvm.colAttrs[col] = newAttrs
+	}
 }
 
 func (gvm *ModelViewCtrl) SetCellValue(r, c int, newValue string) error {
@@ -65,6 +67,39 @@ func (gvm *ModelViewCtrl) Resize(newRow, newCol int) error {
 
 	rwModel.Resize(newRow, newCol)
 	gvm.modelWasResized()
+
+	return nil
+}
+
+func (gvm *ModelViewCtrl) OpenRight(col int) error {
+	if col < 0 {
+		return errors.New("col out of bound")
+	}
+	return gvm.insertColumn(col + 1)
+}
+
+func (gvm *ModelViewCtrl) insertColumn(col int) error {
+	rwModel, isRWModel := gvm.model.(RWModel)
+	if !isRWModel {
+		return ErrModelReadOnly
+	}
+
+	dr, dc := rwModel.Dimensions()
+	if col < 0 || col > dc {
+		return errors.New("col out of bound")
+	}
+
+	rwModel.Resize(dr, dc+1)
+
+	for c := dc; c >= col; c-- {
+		for r := 0; r < dr; r++ {
+			if c == col {
+				rwModel.SetCellValue(r, c, "")
+			} else {
+				rwModel.SetCellValue(r, c, rwModel.CellValue(r, c-1))
+			}
+		}
+	}
 
 	return nil
 }

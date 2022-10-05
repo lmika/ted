@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/lmika/shellwords"
 
@@ -67,12 +68,16 @@ func (cm *CommandMapping) Eval(ctx *CommandContext, expr string) error {
 		return nil
 	}
 
-	cmd := cm.Commands[toks[0]]
+	return cm.Invoke(ctx, toks[0], toks[1:])
+}
+
+func (cm *CommandMapping) Invoke(ctx *CommandContext, name string, args []string) error {
+	cmd := cm.Commands[name]
 	if cmd != nil {
-		return cmd.Do(ctx.WithArgs(toks[1:]))
+		return cmd.Do(ctx.WithArgs(args))
 	}
 
-	return fmt.Errorf("no such command: %v", expr)
+	return fmt.Errorf("no such command: %v", name)
 }
 
 // Registers the standard view navigation commands.  These commands require the frame
@@ -345,8 +350,65 @@ func (cm *CommandMapping) RegisterViewCommands() {
 		return nil
 	})
 
+	cm.Define("to-upper", "Convert cell value to uppercase", "", func(ctx *CommandContext) error {
+		grid := ctx.Frame().Grid()
+		cellX, cellY := grid.CellPosition()
+
+		// TODO: allow ranges
+
+		if _, isRwModel := ctx.ModelVC().Model().(RWModel); !isRwModel {
+			return errors.New("Model is read-only")
+		}
+
+		currentValue := ctx.ModelVC().Model().CellValue(cellY, cellX)
+		newValue := strings.ToUpper(currentValue)
+		if err := ctx.ModelVC().SetCellValue(cellY, cellX, newValue); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	cm.Define("each-row", "Executes the command for each row in the column", "", func(ctx *CommandContext) error {
+		if len(ctx.args) != 1 {
+			return errors.New("Sub-command required")
+		}
+
+		grid := ctx.Frame().Grid()
+		rows, _ := ctx.ModelVC().Model().Dimensions()
+
+		cellX, cellY := grid.CellPosition()
+		defer grid.MoveTo(cellX, cellY)
+
+		subCommand := ctx.args
+
+		for r := 0; r < rows; r++ {
+			grid.MoveTo(cellX, r)
+
+			if err := ctx.Session().Commands.Invoke(ctx, subCommand[0], subCommand[1:]); err != nil {
+				return fmt.Errorf("at [%d, %d]: %v", cellX, r, err)
+			}
+		}
+
+		return nil
+	})
+
 	cm.Define("save", "Save current file", "", func(ctx *CommandContext) error {
-		wSource, isWSource := ctx.Session().Source.(WritableModelSource)
+		var source ModelSource
+		if len(ctx.args) >= 2 {
+			targetCodecName := ctx.args[0]
+			codecBuilder, hasCodec := codecModelSourceBuilders[targetCodecName]
+			if !hasCodec {
+				return fmt.Errorf("unrecognsed codec: %v", targetCodecName)
+			}
+
+			targetFilename := ctx.args[1]
+			source = codecBuilder(targetFilename)
+		} else {
+			source = ctx.Session().Source
+		}
+
+		wSource, isWSource := source.(WritableModelSource)
 		if !isWSource {
 			return fmt.Errorf("model is not writable")
 		}
@@ -356,6 +418,7 @@ func (cm *CommandMapping) RegisterViewCommands() {
 		}
 
 		ctx.Frame().Message("Wrote " + wSource.String())
+		ctx.Session().Source = wSource
 		return nil
 	})
 

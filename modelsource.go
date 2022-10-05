@@ -2,9 +2,12 @@ package main
 
 import (
 	"encoding/csv"
+	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // ModelSource is a source of models.  At a minimum, it must be able to read models.
@@ -107,4 +110,56 @@ func (s CsvFileModelSource) Write(m Model) error {
 	}
 
 	return f.Close()
+}
+
+type JiraTableModelSource struct {
+	Filename string
+	Header   bool
+}
+
+func (s JiraTableModelSource) String() string {
+	return filepath.Base(s.Filename)
+}
+
+func (JiraTableModelSource) Read() (Model, error) {
+	return nil, errors.New("read not supported yet")
+}
+
+func (s JiraTableModelSource) Write(m Model) error {
+	f, err := os.Create(s.Filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	rows, cols := m.Dimensions()
+	line := new(strings.Builder)
+
+	for r := 0; r < rows; r++ {
+		sep := "|"
+		if r == 0 && s.Header {
+			sep = "||"
+		}
+
+		line.Reset()
+		line.WriteString(sep)
+		line.WriteRune(' ')
+
+		for c := 0; c < cols; c++ {
+			if c >= 1 {
+				line.WriteRune(' ')
+				line.WriteString(sep)
+				line.WriteRune(' ')
+			}
+			line.WriteString(m.CellValue(r, c))
+		}
+
+		line.WriteRune(' ')
+		line.WriteString(sep)
+		if _, err := fmt.Fprintln(f, line.String()); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

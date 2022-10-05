@@ -46,4 +46,7 @@ var codecModelSourceBuilders = map[string]codecModelSourceBuilder{
 	"tsv": func(filename string) ModelSource {
 		return NewCsvFileModelSource(filename, CsvFileModelSourceOptions{Comma: '\t'})
 	},
+	"jira": func(filename string) ModelSource {
+		return JiraTableModelSource{Filename: filename, Header: true}
+	},
 }

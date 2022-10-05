@@ -55,18 +55,21 @@ Others:
 | `}`        | Increase cell width  |
 | `/`        | Search for cell matching regular expression |
 | `n`        | Find next cell matching search |
+| `y`        | Copy cell value |
+ | `p`       | Paste cell value |
 | `:`        | Enter command |
 
 ## Commands
 
 Commands can be entered by pressing `:` and typing in the command or alias.
 
-| Command         | Alias      | Description             |
-|:----------------|:-----------|:------------------------|
-| `save`          | `w`        | Save the current file. |
-| `quit`          | `q`        | Quit the application without saving changes. |
-| `save-and-quit` | `wq`       | Save the current file and quit the application. |
-| `open-down`     |            | Insert a new row below the currently selected row. |
-| `open-right`    |            | Insert a new column to the right of the currently selected column. |
-| `delete-row`    |            | Delete the currently selected row. |
-| `delete-column` |            | Delete the currently selected column. |
+| Command               | Alias      | Description             |
+|:----------------------|:-----------|:------------------------|
+| `save`                | `w`        | Save the current file. |
+| `quit`                | `q`        | Quit the application without saving changes. |
+| `save-and-quit`       | `wq`       | Save the current file and quit the application. |
+| `open-down`           |            | Insert a new row below the currently selected row. |
+| `open-right`          |            | Insert a new column to the right of the currently selected column. |
+| `delete-row`          |            | Delete the currently selected row. |
+| `delete-column`       |            | Delete the currently selected column. |
+

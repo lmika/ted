@@ -435,6 +435,18 @@ func (cm *CommandMapping) RegisterViewCommands() {
 		return cm.Eval(ctx, "quit")
 	})
 
+	cm.Define("enter-zygo", "Evaluate a Zygo Lisp expression", "", func(ctx *CommandContext) error {
+		ctx.Frame().Prompt(PromptOptions{Prompt: "% "}, func(expr string) error {
+			res, err := ctx.session.extContext.evalCmd(expr)
+			if err != nil {
+				return err
+			}
+			ctx.Frame().ShowMessage(res)
+			return nil
+		})
+		return nil
+	})
+
 	// Aliases
 	cm.Commands["w"] = cm.Command("save")
 	cm.Commands["q"] = cm.Command("quit")
@@ -484,6 +496,7 @@ func (cm *CommandMapping) RegisterViewKeyBindings() {
 	cm.MapKey('}', cm.Command("inc-col-width"))
 
 	cm.MapKey(':', cm.Command("enter-command"))
+	cm.MapKey('%', cm.Command("enter-zygo"))
 }
 
 // A nativation command factory.  This will perform the passed in operation with the current grid and

@@ -15,7 +15,8 @@ type Session struct {
 	Commands        *CommandMapping
 	UIManager       *ui.Ui
 	modelController *ModelViewCtrl
-	pasteBoard		RWModel
+	pasteBoard      RWModel
+	extContext      *extContext
 
 	LastSearch *regexp.Regexp
 }
@@ -29,8 +30,9 @@ func NewSession(uiManager *ui.Ui, frame *Frame, source ModelSource) *Session {
 		Commands:        NewCommandMapping(),
 		UIManager:       uiManager,
 		modelController: NewGridViewModel(model),
-		pasteBoard: 	 NewSingleCellStdModel(),
+		pasteBoard:      NewSingleCellStdModel(),
 	}
+	session.extContext = newExtContext(session)
 
 	frame.SetModel(&SessionGridModel{session.modelController})
 
